@@ -1,0 +1,10 @@
+---
+- name: Copy zabbix agent to windows hosts
+  win_copy:
+    src: zabbix_agents
+    dest: '{{ zabbix_dst_path }}'
+
+- name: Run a command to install zabbix_agent
+  win_shell: '{{ zabbix_dst_path }}\zabbix_agents\bin\win64\zabbix_agentd.exe -i -c {{ zabbix_dst_path }}\zabbix_agents\conf\zabbix_agentd.win.conf'
+  args:
+    executable: PowerShell.exe

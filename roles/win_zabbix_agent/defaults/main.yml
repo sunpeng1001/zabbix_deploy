@@ -1,0 +1,6 @@
+# zabbix agent path for windows
+zabbix_dst_path: "C:\\PROGRA~1" # OK
+LogFile: c:\zabbix_agentd.log
+# different host have different zabbix_server_ip, hostmetadata, hostname which refine in host!
+zabbix_server_ip: 999999999999999
+hostmetadata: cluster-one

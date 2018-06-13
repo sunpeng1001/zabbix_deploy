@@ -1,0 +1,4 @@
+---
+- import_playbook: zabbix_server_install.yml 
+- import_playbook: zabbix_proxy_install.yml 
+- import_playbook: zabbix_agent_install.yml  

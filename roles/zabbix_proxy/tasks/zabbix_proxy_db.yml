@@ -1,0 +1,30 @@
+---
+- name: Copy the mariadb config file
+  template: src={{ item.src }} dest={{ item.dest }}
+  with_items:
+    - {src: templates/my.cnf.j2, dest: /etc/my.cnf}
+    - {src: templates/mariadb-server.cnf.j2, dest: /etc/my.cnf.d/mariadb-server.cnf}
+  notify: Restart zabbix db
+
+- name: Create mysql data dir
+  file: path={{ mysql_datadir }} state=directory mode=0755 owner=mysql group=mysql recurse=yes
+
+- name: Start mariadb
+  service: name=mariadb state=started enabled=yes
+
+- name: Create db
+  mysql_db: name=zabbix state=present encoding=utf8
+
+- name: Create zabbix db user
+  mysql_user: name={{ DBUser }} password={{ DBPassword }} priv='zabbix.*:ALL,GRANT' state=present
+
+- name: Get zabbix version
+  shell: zabbix_proxy -V |head -1 |awk '{print $3}'
+  register: zabbix_version
+
+- name: Unzip sql file
+  shell: zcat /usr/share/doc/zabbix-proxy-mysql-{{ zabbix_version.stdout }}/schema.sql.gz > /usr/share/doc/zabbix-proxy-mysql-{{ zabbix_version.stdout }}/schema.sql
+
+- name: Import db
+  mysql_db: name=zabbix state=import target=/usr/share/doc/zabbix-proxy-mysql-{{ zabbix_version.stdout }}/schema.sql
+  ignore_errors: True

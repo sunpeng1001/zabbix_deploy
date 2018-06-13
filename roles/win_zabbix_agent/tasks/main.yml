@@ -1,0 +1,4 @@
+---
+- import_tasks: win_zabbix_agent_install.yml
+- import_tasks: win_zabbix_agent_config.yml
+- import_tasks: win_zabbix_agent_firewall.yml

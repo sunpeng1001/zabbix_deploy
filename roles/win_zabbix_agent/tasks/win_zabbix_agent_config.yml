@@ -1,0 +1,5 @@
+---
+- name: Copy zabbix-agent configure
+  win_template: src=templates/zabbix_agentd.win.conf dest='{{ zabbix_dst_path }}\zabbix_agents\conf\zabbix_agentd.win.conf'
+  notify:
+    - Restart zabbix agent

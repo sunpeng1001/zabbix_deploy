@@ -1,0 +1,14 @@
+---
+- import_tasks: zabbix_server_iptables.yml
+  when: iptables == 'true'
+  tags: iptables
+- import_tasks: zabbix_server_install.yml
+  when: local != 'true'
+  tags: install
+- import_tasks: zabbix_server_local_install.yml
+  when: local == 'true'
+  tags: install
+- import_tasks: zabbix_server_db.yml
+  tags: config-db
+- import_tasks: zabbix_server_config.yml
+  tags: config

@@ -1,0 +1,51 @@
+# Iptables
+#
+iptables_accept_port:
+  - 10051
+
+# Install Config
+#
+iptables: false
+local: true
+local_packages_exist: true
+rpm_delete: true
+# different proxy,different value!
+proxy_hostname: proxy-1
+local_main_dir: /tmp
+local_packages_dir: "{{ local_main_dir }}/zabbix-proxy"
+local_packages_gz: "{{ local_main_dir }}/zabbix-proxy.gz"
+
+# Common Config
+#
+LogFile: /var/log/zabbix/zabbix_proxy.log
+LogFileSize: 0
+ListenPort: 10051
+zabbix_server_ip: 10.10.11.102
+ProxyMode: 0
+AllowRoot: 1
+DBHost: localhost
+DBName: zabbix
+DBUser: zabbix
+DBPassword: cf6900e1fd3d
+AlertScriptsPath: /etc/zabbix/scripts
+
+# Optimize Config
+#
+ProxyOfflineBuffer: 1
+ConfigFrequency: 60
+DataSenderFrequency: 1
+StartPollers: 5
+StartTrappers: 5
+StartPingers: 1
+StartDiscoverers: 1
+StartHTTPPollers: 1
+CacheSize: 8M
+StartDBSyncers: 4
+HistoryCacheSize: 16M
+HistoryIndexCacheSize: 4M
+
+# MYSQL
+#mysql_datedir,Be sure below dir exits in reomte nodes!
+basedir: /var/lib
+mysql_datadir: "{{ basedir }}/mysql"
+innodb_buffer_pool_size: 2G

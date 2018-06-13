@@ -1,0 +1,19 @@
+---
+- name: Install iptables packages
+  yum: name=iptables-services state=present
+
+- name: Start iptables services
+  service: name=iptables state=started enabled=yes
+
+- name: Config zabbix proxy iptables
+  iptables: action=insert chain=INPUT jump=ACCEPT protocol=tcp destination_port={{ item }}
+  with_items:
+    - "{{ iptables_accept_port }}"
+
+- name: Insert tcp rule to /etc/sysconfig/iptables
+  lineinfile:
+    path: /etc/sysconfig/iptables
+    insertafter: '^:OUTPUT ACCEPT '
+    line: '-A INPUT -p tcp -m tcp --dport {{ item }} -j ACCEPT'
+  with_items:
+    - "{{ iptables_accept_port }}"

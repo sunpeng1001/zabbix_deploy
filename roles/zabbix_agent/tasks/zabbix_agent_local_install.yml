@@ -1,0 +1,47 @@
+---
+- name: Check and install repository of zabbix locally
+  shell: yum list|grep zabbix-server-mysql || rpm -ivh http://repo.zabbix.com/zabbix/3.0/rhel/7/x86_64/zabbix-release-3.0-1.el7.noarch.rpm
+  connection: local
+  when: local_packages_exist == 'false'
+  run_once: True
+  tags: rpm-get
+
+- name: Download zabbix agent packages locally
+  shell: yum install --downloadonly --downloaddir=/tmp/zabbix-agent/ zabbix-agent sysstat -y
+  connection: local
+  when: local_packages_exist == 'false'
+  run_once: True
+  tags: rpm-get
+
+- name: Compress the zabbix packages locally
+  archive: path=/tmp/zabbix-agent  dest=/tmp/zabbix-agent.gz
+  connection: local
+  run_once: True
+
+- name: Mkdir directory
+  file: path=/tmp/zabbix-agent state=directory mode=755
+
+- name: Unpacks Compressed directory
+  unarchive: src=/tmp/zabbix-agent.gz dest=/tmp/
+
+- name: Delete Compressed directory
+  file: path={{ item }}  state=absent
+  run_once: True
+  connection: local
+  with_items:
+    - /tmp/zabbix-agent
+    - /tmp/zabbix-agent.gz
+  when: rpm_delete == 'true'
+  tags: rpm-del
+
+- name: Install zabbix-agent with rpm packages
+  shell: cd /tmp/zabbix-agent && yum localinstall *.rpm -y
+
+- name: Delete the rpm packages
+  file: path=/tmp/zabbix-agent  state=absent
+  ignore_errors: True
+
+- name: Delete the yum tmp files
+  shell: rm -rf /tmp/yum_save_tx.*.yumtx
+  run_once: True
+  connection: local

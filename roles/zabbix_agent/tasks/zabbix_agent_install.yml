@@ -1,0 +1,6 @@
+---
+- name: install zabbix agent
+  yum: name={{ item }}
+  with_items:
+    - zabbix-agent
+    - sysstat

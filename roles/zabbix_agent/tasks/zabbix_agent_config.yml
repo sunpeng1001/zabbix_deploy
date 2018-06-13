@@ -1,0 +1,55 @@
+---
+- name: Create dir /etc/zabbix/scripts/
+  file: path=/etc/zabbix/scripts/ state=directory mode=0755
+
+- name: Check the agent role
+  shell: rpm -qa|grep zabbix-server &>/dev/null && echo 0 || echo 1
+  register: server_role_code
+
+- name: Copy process monitor scripts
+  copy: src={{ item }} dest=/etc/zabbix/scripts/ owner=zabbix mode=755
+  with_fileglob:
+    - files/scripts/ironic/*
+  when: deploy_env == 'ironic'
+
+- name: Copy process monitor scripts
+  copy: src={{ item }} dest=/etc/zabbix/scripts/ owner=zabbix mode=755
+  with_fileglob:
+    - files/scripts/openstack/*
+  when: deploy_env == 'openstack'
+
+- name: Check the ceph node role
+  shell: ceph -s &>/dev/null && echo 0 || echo 1
+  register: ceph_role_code
+  when: deploy_env == 'ceph'
+
+- name: Add zabbix user to the ceph user group
+  shell: usermod -aG ceph zabbix
+  when:
+    - deploy_env == 'ceph'
+    - ceph_role_code == '0'
+
+- name: Copy process monitor scripts
+  copy: src={{ item }} dest=/etc/zabbix/scripts/ owner=zabbix mode=755
+  with_fileglob:
+    - files/scripts/cpph/*
+  when: deploy_env == 'ceph'
+
+- name: Copy ceph process monitor service scripts
+  copy: src={{ item }} dest=/usr/lib/systemd/system/ceph-monitor-json.service owner=zabbix mode=755
+  with_items:
+    - files/scripts/ceph/ceph-monitor-json.service
+  when:
+    - deploy_env == 'ceph'
+    - ceph_role_code == '0'
+
+- name: Start ceph mointor service
+  service: name=ceph-monitor-json state=started enabled=yes
+  when:
+    - deploy_env == 'ceph'
+    - ceph_role_code == '0'
+
+- name: Copy zabbix-agent configure
+  template: src=templates/zabbix_agentd.conf.j2 dest=/etc/zabbix/zabbix_agentd.conf
+  notify:
+    - Restart zabbix agent

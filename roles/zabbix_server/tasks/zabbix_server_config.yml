@@ -1,0 +1,22 @@
+---
+- name: Copy zabbix.conf
+  template: src=templates/zabbix.conf.j2 dest=/etc/httpd/conf.d/zabbix.conf
+
+- name: Create dir /etc/zabbix/scripts/
+  file: path=/etc/zabbix/scripts/ state=directory owner=zabbix group=zabbix mode=0755
+
+- name: Copy media scripts
+  copy: src={{ item }} dest=/etc/zabbix/scripts/ owner=zabbix group=zabbix  mode=755
+  with_fileglob:
+    - files/*
+
+- name: Copy zabbix_server.conf
+  template: src=templates/zabbix_server.conf.j2 dest=/etc/zabbix/zabbix_server.conf
+  notify: Restart zabbix server
+
+
+- name: Start zabbix-server and httpd service
+  service: name={{ item }} state=started enabled=yes
+  with_items:
+    - httpd
+    - zabbix-server

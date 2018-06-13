@@ -1,0 +1,28 @@
+---
+- name: Install iptables packages
+  yum: name=iptables-services state=present
+
+- name: Start iptables services
+  service: name=iptables state=started enabled=yes
+
+- name: Config zabbix_agent iptables
+  iptables:
+    action: insert
+    chain: INPUT
+    jump: ACCEPT
+    source: '{{ item[0] }}'
+    protocol: tcp
+    match: multiport
+    destination_port: '{{ item[1] }}'
+  with_nested:
+    - '{{ zabbix_agent_network }}'
+    - '{{ iptables_accept_port }}'
+
+- name: Insert tcp rule to /etc/sysconfig/iptables
+  lineinfile:
+    path: /etc/sysconfig/iptables
+    insertafter: '^:OUTPUT ACCEPT '
+    line: '-A INPUT -s {{ item[0] }} -p tcp -m multiport --dport {{ item[1] }} -j ACCEPT'
+  with_nested:
+    - '{{ zabbix_agent_network }}'
+    - '{{ iptables_accept_port }}'

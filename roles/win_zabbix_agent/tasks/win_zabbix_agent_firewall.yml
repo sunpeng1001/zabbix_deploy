@@ -1,0 +1,5 @@
+---
+- name: Add program of zabbix_agent to firewall
+  win_shell: 'netsh advfirewall firewall add rule name="zabbix_agent" dir=in action=allow program="{{ zabbix_dst_path }}\zabbix_agents\bin\win64\zabbix_agentd.exe" enable=yes'
+  args:
+    executable: PowerShell.exe

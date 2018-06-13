@@ -1,0 +1,13 @@
+---
+- import_tasks: zabbix_agent_init.yml
+- import_tasks: zabbix_agent_iptables.yml
+  tags: iptables
+  when: iptables == 'true'
+- import_tasks: zabbix_agent_install.yml
+  tags: install
+  when: local != 'true'
+- import_tasks: zabbix_agent_local_install.yml
+  tags: install
+  when: local == 'true'
+- import_tasks: zabbix_agent_config.yml
+  tags: config

@@ -1,0 +1,7 @@
+---
+- name: Copy zabbix_proxy.conf
+  template: src=templates/zabbix_proxy.conf.j2 dest=/etc/zabbix/zabbix_proxy.conf
+  notify: Restart zabbix proxy
+
+- name: Start zabbix-proxy
+  service: name=zabbix-proxy state=started enabled=yes

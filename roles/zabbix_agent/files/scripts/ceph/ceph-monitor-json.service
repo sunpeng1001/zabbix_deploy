@@ -1,0 +1,27 @@
+[Unit]
+Description=Ceph cluster monitor json
+
+# According to:
+#   http://www.freedesktop.org/wiki/Software/systemd/NetworkTarget
+# these can be removed once ceph-mon will dynamically change network
+# configuration.
+After=ceph.target zabbix-agent
+Wants=network-online.target
+
+
+[Service]
+
+ExecStart=/etc/zabbix/scripts/ceph-monitor-json.py zabbix
+ExecReload=/bin/kill -HUP $MAINPID
+PrivateDevices=yes
+ProtectHome=true
+ProtectSystem=full
+#PrivateTmp=true
+Restart=on-failure
+StartLimitInterval=30min
+StartLimitBurst=5
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+

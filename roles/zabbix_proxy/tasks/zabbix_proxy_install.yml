@@ -1,0 +1,8 @@
+---
+- name: Install zabbix proxy packages
+  yum: name={{ item }}
+  with_items:
+    - zabbix-proxy-mysql
+    - mariadb-server
+    - mariadb
+    - MySQL-python

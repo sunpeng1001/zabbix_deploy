@@ -1,0 +1,43 @@
+---
+- name: Check and install repository of zabbix locally
+  shell: |
+     yum list|grep zabbix-server-mysql || rpm -ivh http://repo.zabbix.com/zabbix/3.0/rhel/7/x86_64/zabbix-release-3.0-1.el7.noarch.rpm
+     yum list|grep percona-xtrabackup || yum install epel-release -y
+  run_once: True
+  connection: local
+  when: local_packages_exist == 'false'
+  tags: rpm-get
+
+- name: Download zabbix server packages locally
+  shell: yum install --downloadonly --downloaddir={{ local_packages_dir }} zabbix-server-mysql zabbix-web-mysql  mariadb-server mariadb MySQL-python percona-xtrabackup -y
+  run_once: True
+  connection: local
+  when: local_packages_exist == 'false'
+  tags: rpm-get
+
+- name: Compress the zabbix packages locally
+  archive: path={{ local_packages_dir }}  dest={{ local_packages_gz }}
+  run_once: True
+  connection: local
+
+- name: Mkdir directory
+  file: path=/tmp/zabbix-server state=directory mode=755
+
+- name: Unpacks Compressed directory
+  unarchive: src={{ local_packages_gz }} dest=/tmp/
+
+- name: Delete Compressed directory
+  file: path={{ item }}  state=absent
+  run_once: True
+  connection: local
+  with_items:
+    - "{{ local_packages_dir }}"
+    - "{{ local_packages_gz }}"
+  when: rpm_delete == 'true'
+  tags: rpm-del
+
+- name: Install zabbix-server with rpm packages
+  shell: cd /tmp/zabbix-server && yum localinstall *.rpm -y
+
+- name: Delete the rpm packages
+  file: path=/tmp/zabbix-server  state=absent

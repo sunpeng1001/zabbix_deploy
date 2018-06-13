@@ -1,0 +1,55 @@
+---
+- name: Copy the mariadb config file
+  template: src={{ item.src }} dest={{ item.dest }}
+  with_items:
+    - {src: templates/my.cnf.j2, dest: /etc/my.cnf}
+    - {src: templates/mariadb-server.cnf.j2, dest: /etc/my.cnf.d/mariadb-server.cnf}
+  notify: Restart zabbix db
+
+- name: Create mysql data dir
+  file: path={{ mysql_datadir }} state=directory mode=0755 owner=mysql group=mysql recurse=yes
+
+- name: Start mariadb
+  service: name=mariadb state=started enabled=yes
+
+- name: Create db
+  mysql_db: name=zabbix state=present encoding=utf8
+
+- name: Create zabbix db user
+  mysql_user: name={{ DBUser }} password={{ DBPassword }} priv='zabbix.*:ALL,GRANT' state=present
+
+- name: Get zabbix version
+  shell: zabbix_server -V |head -1 |awk '{print $3}'
+  register: zabbix_version
+
+- name: Unzip sql file
+  shell: zcat /usr/share/doc/zabbix-server-mysql-{{ zabbix_version.stdout }}/create.sql.gz > /usr/share/doc/zabbix-server-mysql-{{ zabbix_version.stdout }}/create.sql
+
+- name: Import db
+  mysql_db: name=zabbix state=import target=/usr/share/doc/zabbix-server-mysql-{{ zabbix_version.stdout }}/create.sql
+  ignore_errors: True
+
+- name: Create mysql binlog dir
+  file: path={{ mysql_datadir }}/binlog state=directory mode=0755 owner=mysql group=mysql recurse=yes
+
+- name: Copy the mariadb backup scripts
+  template: src=templates/backup.sh dest={{ basedir }} mode=0744
+
+- name: Add binlog setting to mariadb
+  blockinfile:
+    path: /etc/my.cnf
+    marker: '#{mark} binlog setting {mark}#'
+    state: present
+    block: |
+      server_id = 1
+      log_bin = {{ mysql_datadir }}/binlog/mysql-bin
+      sync_binlog = 0
+      binlog_cache_size = 32M
+      max_binlog_cache_size = 512M
+      max_binlog_size = 1G
+      binlog_format = ROW
+      expire_logs_days = 14
+      net_retry_count = 10
+
+- name: Create DB backup script crontab
+  cron: hour=1 minute=0 job="sh {{ basedir }}/backup.sh"
